@@ -1,4 +1,4 @@
-module github.com/taichi/ebiten-syc-game
+module github.com/o-ga09/ebiten-syc-game
 
 go 1.27.3
 

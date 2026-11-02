@@ -13,8 +13,7 @@
     {
       "binding": "DB",
       "database_name": "jinsei-game",
-      // Replace with the id printed by `npx wrangler d1 create jinsei-game` before deploying.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "31263c85-0b58-43ec-b1c7-7dbcc1540d71",
       "migrations_dir": "migrations"
     }
   ],
