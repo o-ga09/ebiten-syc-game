@@ -171,7 +171,7 @@ func drawWorld(dst *ebiten.Image, w *World, sp *Sprites) {
 		if w.Over {
 			cs.Scale(0.5, 0.5, 0.6, 1)
 		}
-		py := playerRowY - w.JumpHop()
+		py := playerRowY - w.JumpHop() + w.FallOffset()
 		drawSprite(dst, sp.Player, w.VisX, py, 1, sy, cs)
 		if sp.Hat != nil {
 			drawSprite(dst, sp.Hat, w.VisX, py-float64(len(playerArt))*sy+2, 1, 1, cs)

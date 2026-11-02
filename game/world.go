@@ -8,6 +8,12 @@ import (
 )
 
 const (
+	// safeRows rows from the start always have floors on both sides so the
+	// first taps can never fall (0-3 years old).
+	safeRows = 15
+	// fallTicks is how long the fall animation lasts after a missed step.
+	fallTicks = 30
+
 	rowsPerYear = 5
 	rowH        = 26
 	playerRowY  = screenH - 130 // screen Y of the player's row
@@ -102,6 +108,8 @@ type World struct {
 	MaxRow                int
 	VisRow, VisX          float64
 	jumpTick              int
+	fallTick              int // tick when the player stepped into the void, -1 = not falling
+	fallLane              int
 	lastJump              int
 	pending               int // buffered jump direction, -1 = none
 
@@ -142,6 +150,7 @@ func NewWorld(b Birth, seed uint64, resets int) *World {
 		ResetsLeft: resets,
 		pending:    -1,
 		lastJump:   -10,
+		fallTick:   -1,
 		rng:        rand.New(rand.NewPCG(seed, seed*31+7)),
 		enemyTimer: 180,
 	}
@@ -240,6 +249,9 @@ func (w *World) genRow(n int) Row {
 		r.NoRoute = true
 		pBoth = 0
 	}
+	if n <= safeRows {
+		pBoth = 1
+	}
 	if w.rng.Float64() < pBoth {
 		r.Slots[0].Exists = true
 		r.Slots[1].Exists = true
@@ -333,11 +345,17 @@ func (w *World) doJump(dir int) {
 	slot := &w.Row(target).Slots[dir]
 	if !slot.Exists {
 		w.burst(laneX[dir], float64(target)*rowH, color.RGBA{0xff, 0xff, 0xff, 0xff}, 6)
+		if w.Invincible == 0 {
+			w.fallTick = w.Tick
+			w.fallLane = dir
+			w.msg("足をふみはずした！", colRed)
+		}
 		w.miss("足をふみはずした")
 		return
 	}
 	w.PlayerRow = target
 	w.PlayerLane = dir
+	w.fallTick = -1
 	w.MaxRow = max(w.MaxRow, w.PlayerRow)
 	w.land(slot)
 }
@@ -448,7 +466,13 @@ func (w *World) Update() {
 	w.Tick++
 	w.updateEffects()
 	w.VisRow += (float64(w.PlayerRow) - w.VisRow) * 0.4
-	w.VisX += (laneX[w.PlayerLane] - w.VisX) * 0.4
+	targetX := laneX[w.PlayerLane]
+	if w.Falling() {
+		targetX = laneX[w.fallLane]
+	} else if w.fallTick >= 0 {
+		w.fallTick = -1
+	}
+	w.VisX += (targetX - w.VisX) * 0.4
 	if w.Over {
 		return
 	}
@@ -580,6 +604,7 @@ func (w *World) Reset() bool {
 	w.Cause = ""
 	w.ResetsLeft--
 	w.pending = -1
+	w.fallTick = -1
 	w.msg("リセット再起動しました", color.RGBA{0x80, 0xff, 0xff, 0xff})
 	w.emit(EvReset)
 	return true
@@ -646,6 +671,31 @@ func (w *World) VisibleAhead() int {
 		return 6
 	}
 	return 2
+}
+
+// Falling reports whether the fall animation is playing. After a fatal
+// fall it keeps playing so the player drops off the screen.
+func (w *World) Falling() bool {
+	if w.fallTick < 0 {
+		return false
+	}
+	return w.Over || w.Tick-w.fallTick < fallTicks
+}
+
+// FallOffset is how many pixels the player has dropped below its row.
+func (w *World) FallOffset() float64 {
+	if !w.Falling() {
+		return 0
+	}
+	t := float64(w.Tick - w.fallTick)
+	if !w.Over {
+		// Drop, then pop back up onto the original step.
+		half := float64(fallTicks) / 2
+		if t > half {
+			t = float64(fallTicks) - t
+		}
+	}
+	return 0.12 * t * t
 }
 
 // JumpHop returns the vertical hop offset in pixels for the jump animation.

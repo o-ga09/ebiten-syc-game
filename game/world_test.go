@@ -213,3 +213,41 @@ func TestComboKeyIsOrderIndependent(t *testing.T) {
 		t.Fatalf("%s != %s", a.ComboKey(), b.ComboKey())
 	}
 }
+
+func TestEarlyRowsHaveBothFloors(t *testing.T) {
+	for seed := range uint64(50) {
+		w := NewWorld(plainBirth(), seed, 0)
+		for n := 1; n <= safeRows; n++ {
+			r := w.Row(n)
+			if !r.Slots[0].Exists || !r.Slots[1].Exists {
+				t.Fatalf("seed %d row %d: early rows must have both floors", seed, n)
+			}
+		}
+	}
+}
+
+func TestMissingFloorStartsFallAnimation(t *testing.T) {
+	b := plainBirth()
+	b.Talents[0] = TTough // survive the fall
+	w := NewWorld(b, 1, 0)
+	setRow(w, 1, floor, Slot{})
+	w.Jump(1)
+	if !w.Falling() {
+		t.Fatal("expected falling state")
+	}
+	if w.FallOffset() != 0 {
+		t.Fatalf("offset at start = %v", w.FallOffset())
+	}
+	for range 10 {
+		w.Update()
+	}
+	if w.FallOffset() <= 0 {
+		t.Fatalf("player should drop, offset=%v", w.FallOffset())
+	}
+	for range fallTicks {
+		w.Update()
+	}
+	if w.Falling() {
+		t.Fatal("fall animation should end when the player survives")
+	}
+}
