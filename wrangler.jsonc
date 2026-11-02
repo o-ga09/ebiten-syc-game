@@ -17,6 +17,9 @@
       "migrations_dir": "migrations"
     }
   ],
+  "routes": [
+    { "pattern": "syc-game.o-ga09.com", "custom_domain": true }
+  ],
   "observability": { "enabled": true },
   "build": {
     "command": "make build"

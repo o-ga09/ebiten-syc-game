@@ -5,6 +5,7 @@
 
 - ゲーム本体：Go + [Ebitengine](https://ebitengine.org/)（wasm）
 - サーバー：Go + [syumai/workers-go](https://github.com/syumai/workers-go)（Cloudflare Workers）+ D1
+- 公開URL：https://syc-game.o-ga09.com
 - 仕様：[docs/SPEC.md](docs/SPEC.md)
 
 ## 必要なもの
