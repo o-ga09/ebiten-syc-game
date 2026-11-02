@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jinsei-game",
+  "main": "./build/worker.mjs",
+  "compatibility_date": "2026-10-01",
+  // public/ (index.html, game.html, game.wasm, wasm_exec.js) is served as static assets.
+  // Only /api/* reaches the Go worker.
+  "assets": {
+    "directory": "./public",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jinsei-game",
+      // Replace with the id printed by `npx wrangler d1 create jinsei-game` before deploying.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": { "enabled": true },
+  "build": {
+    "command": "make build"
+  }
+}

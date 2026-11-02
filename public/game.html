@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>じんせいGAME</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #0d0b1a; overflow: hidden; touch-action: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; color: #ffe040;
+    font: 16px/1.6 ui-monospace, "Hiragino Kaku Gothic ProN", monospace; text-align: center; }
+  #loading small { color: #9090a0; }
+  .bar { width: 160px; height: 8px; border: 2px solid #ffe040; margin: 12px auto 0; }
+  .bar i { display: block; height: 100%; width: 0; background: #ffe040; transition: width .2s; }
+  dialog { border: 3px solid #fff; background: #181430; color: #fff; padding: 20px; width: min(80vw, 300px);
+    font: 15px/1.5 "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; image-rendering: pixelated; }
+  dialog::backdrop { background: rgba(0,0,0,.7); }
+  dialog h2 { margin: 0 0 4px; font-size: 17px; color: #ffe040; }
+  dialog p { margin: 0 0 12px; font-size: 12px; color: #a0a0b8; }
+  dialog input { width: 100%; box-sizing: border-box; font-size: 18px; padding: 8px; border: 2px solid #fff;
+    background: #0d0b1a; color: #fff; border-radius: 0; }
+  dialog menu { display: flex; gap: 8px; justify-content: flex-end; padding: 0; margin: 16px 0 0; }
+  dialog button { font: inherit; padding: 6px 14px; border: 2px solid #fff; background: #e84060; color: #fff; border-radius: 0; }
+  dialog button[value=cancel] { background: #505068; }
+  #err { color: #ff5050; min-height: 1em; font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div id="loading"><div>人生をロード中…<div class="bar"><i id="progress"></i></div><small>はじめての読み込みは少し時間がかかります</small></div></div>
+
+<dialog id="nameDialog">
+  <form method="dialog" id="nameForm">
+    <h2>なまえを入力</h2>
+    <p>ランキングと墓標に表示されます（10文字まで）</p>
+    <input id="nameInput" maxlength="10" autocomplete="off" enterkeyhint="done" required>
+    <div id="err"></div>
+    <menu>
+      <button value="cancel" formnovalidate>やめる</button>
+      <button value="ok" id="nameOk">けってい</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="wasm_exec.js"></script>
+<script>
+  // Name dialog bridge used by game/platform_js.go.
+  const dlg = document.getElementById('nameDialog');
+  const input = document.getElementById('nameInput');
+  const err = document.getElementById('err');
+  const allowed = /^[\p{L}\p{N}ー・！？!?_\-.☆★♪～~ 　]+$/u;
+  let nameCallback = null;
+  window.openNameDialog = (current, cb) => {
+    nameCallback = cb;
+    input.value = current || '';
+    err.textContent = '';
+    dlg.showModal();
+    setTimeout(() => input.focus(), 50);
+  };
+  document.getElementById('nameOk').addEventListener('click', (e) => {
+    const v = input.value.trim();
+    if (!v) { err.textContent = 'なまえを入れてください'; e.preventDefault(); return; }
+    if ([...v].length > 10) { err.textContent = '10文字までです'; e.preventDefault(); return; }
+    if (!allowed.test(v)) { err.textContent = '使えない記号が入っています'; e.preventDefault(); return; }
+  });
+  dlg.addEventListener('close', () => {
+    const cb = nameCallback; nameCallback = null;
+    if (cb) cb(dlg.returnValue === 'ok' ? input.value.trim() : '');
+  });
+
+  // Load the game with a progress bar.
+  (async () => {
+    const go = new Go();
+    const res = await fetch('game.wasm');
+    const total = +res.headers.get('Content-Length') || 0;
+    let wasm;
+    if (total && res.body) {
+      const reader = res.body.getReader();
+      const chunks = []; let got = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value); got += value.length;
+        document.getElementById('progress').style.width = Math.min(100, got / total * 100) + '%';
+      }
+      wasm = await new Blob(chunks).arrayBuffer();
+    } else {
+      wasm = await res.arrayBuffer();
+    }
+    const { instance } = await WebAssembly.instantiate(wasm, go.importObject);
+    document.getElementById('loading').remove();
+    go.run(instance);
+  })().catch((e) => {
+    document.getElementById('loading').textContent = '読み込みに失敗しました：' + e;
+  });
+</script>
+</body>
+</html>

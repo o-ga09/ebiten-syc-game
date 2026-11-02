@@ -1,0 +1,13 @@
+{
+  "name": "jinsei-game",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "make build",
+    "dev": "make dev",
+    "deploy": "make deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.156.1"
+  }
+}

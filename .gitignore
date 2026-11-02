@@ -1,0 +1,6 @@
+/build/
+/public/game.wasm
+/public/wasm_exec.js
+/node_modules/
+/.wrangler/
+.dev.vars

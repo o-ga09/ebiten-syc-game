@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>じんせいGAME（仮）</title>
+<meta name="description" content="ガチャで決まる人生を、左右タップでどこまでものぼるブラウザゲーム。山本彩「game」にちなんだファンメイド作品です。">
+<meta name="theme-color" content="#0d0b1a">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0d0b1a;
+    --panel: #181430;
+    --line: #3a3460;
+    --text: #f0f0f8;
+    --dim: #9a96b8;
+    --accent: #ffe040;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.5 "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; height: 100dvh; }
+  #game { flex: 1; min-height: 0; width: 100%; border: 0; display: block; background: var(--bg); }
+  footer { flex: none; background: var(--panel); border-top: 2px solid var(--line);
+    padding: 0 16px env(safe-area-inset-bottom); }
+  details { max-width: 660px; margin: 0 auto; }
+  summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    min-height: 44px; font-weight: 700; }
+  summary::-webkit-details-marker { display: none; }
+  summary .note { margin-left: auto; color: var(--dim); font-weight: 400; font-size: 12px; }
+  summary .note::after { content: "▲ ひらく"; }
+  details[open] summary .note::after { content: "▼ とじる"; }
+  .eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; }
+  .eq i { width: 3px; background: var(--accent); animation: eq 1s infinite ease-in-out; }
+  .eq i:nth-child(2) { animation-delay: .2s; } .eq i:nth-child(3) { animation-delay: .4s; }
+  @keyframes eq { 0%,100% { height: 4px; } 50% { height: 14px; } }
+  @media (prefers-reduced-motion: reduce) { .eq i { animation: none; height: 10px; } }
+  .player { padding-bottom: 10px; }
+  .player iframe { width: 100%; height: 175px; border: 0; border-radius: 10px; overflow: hidden; display: block; }
+  .links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+  .links a { color: var(--accent); }
+</style>
+</head>
+<body>
+  <iframe id="game" src="game.html" title="じんせいGAME" allow="autoplay"></iframe>
+  <footer>
+    <details id="music">
+      <summary>
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+        山本彩「game」を聴きながら遊ぶ
+        <span class="note"></span>
+      </summary>
+      <div class="player">
+        <iframe
+          title="山本彩「game」- Apple Music"
+          allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write"
+          sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
+          loading="lazy"
+          src="https://embed.music.apple.com/jp/album/game/6827047029?i=6827047036"></iframe>
+        <div class="links">
+          <a href="https://www.uta-net.com/song/401438/" target="_blank" rel="noopener">歌詞（うたネット）</a>
+          <a href="https://music.apple.com/jp/album/game/6827047029?i=6827047036" target="_blank" rel="noopener">Apple Musicで開く</a>
+          <span>※非公式のファンメイド作品です</span>
+        </div>
+      </div>
+    </details>
+  </footer>
+  <script>
+    // Keep keyboard focus in the game so arrow keys work after using the player.
+    const game = document.getElementById('game');
+    game.addEventListener('load', () => game.contentWindow.focus());
+    document.getElementById('music').addEventListener('toggle', () => game.contentWindow.focus());
+  </script>
+</body>
+</html>
